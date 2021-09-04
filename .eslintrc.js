@@ -17,7 +17,10 @@ module.exports = {
     'no-tabs': 0,
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
     'linebreak-style': 0,
-    'react/jsx-filename-extension': [1, { extensions: ['.js', '.jsx'] }],
+    'react/jsx-filename-extension': [
+      1,
+      { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+    ],
     semi: ['error', 'never'],
   },
   globals: {

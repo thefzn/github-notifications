@@ -40,8 +40,9 @@ module.exports = {
       services: path.resolve(__dirname, 'src/services/'),
       store: path.resolve(__dirname, 'src/store/'),
       state: path.resolve(__dirname, 'src/state/'),
-      config: path.resolve(__dirname, 'src/config.json'),
+      models: path.resolve(__dirname, 'src/models/'),
     },
+    extensions: ['.ts', '.tsx', '.js', 'jsx'],
   },
   devServer,
   plugins: [
@@ -72,9 +73,14 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
-        include: path.resolve(__dirname, 'src'),
-        loader: 'babel-loader',
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: ['babel-loader'],
+      },
+      {
+        test: /\.(ts|tsx)$/,
+        exclude: /node_modules/,
+        use: ['ts-loader'],
       },
       {
         test: /\.css$/,
