@@ -4,7 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const GenerateJsonPlugin = require('generate-json-webpack-plugin')
 const ZipPlugin = require('zip-webpack-plugin')
-const MANIFEST = require('./extension/manifest.json')
+const MANIFEST = require('./src/extension/manifest.json')
 const PACKAGE = require('./package.json')
 
 const manifest = {
@@ -29,8 +29,8 @@ const devServer =
 
 module.exports = {
   entry: {
-    app: './src/index.js',
-    background: './extension/background.js',
+    app: './src/index.tsx',
+    background: './src/extension/index.js',
   },
   resolve: {
     alias: {
@@ -41,6 +41,7 @@ module.exports = {
       store: path.resolve(__dirname, 'src/store/'),
       state: path.resolve(__dirname, 'src/state/'),
       models: path.resolve(__dirname, 'src/models/'),
+      extension: path.resolve(__dirname, 'src/extension/'),
     },
     extensions: ['.ts', '.tsx', '.js', 'jsx'],
   },
