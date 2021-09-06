@@ -1,11 +1,10 @@
-import { Status } from 'models/github'
-import { BgMessage } from 'models/bg'
+import { Status, ChromeStorage } from 'models/github'
+import { BgMessage, BgResponse } from 'models/bg'
 
 const msgListeners: Function[] = []
 const unloadListeners: Function[] = []
 
-export const { id }: { id: chrome.runtime.MessageSender } =
-  chrome.app.getDetails()
+export const { id }: ChromeExtensionDetails = chrome.app.getDetails()
 
 const msgListener: any = chrome.runtime.onMessage.addListener(
   (request, sender, respond) => {
@@ -22,52 +21,61 @@ const unloadListener: any = chrome.runtime.onSuspend.addListener(() => {
   unloadListeners.forEach(listener => listener())
 })
 
-export function stopListening() {
-  const test: chrome.runtime.ExtensionMessageEvent = chrome.runtime.onMessage
+export function stopListening(): void {
   chrome.runtime.onMessage.removeListener(msgListener)
   chrome.runtime.onMessage.removeListener(unloadListener)
 }
 
-export function onMessage(fn: Function) {
+export function onMessage(fn: Function): void {
   if (typeof fn === 'function') {
     msgListeners.push(fn)
   }
 }
 
-export function onUnload(fn: Function) {
+export function onUnload(fn: Function): void {
   if (typeof fn === 'function') {
     unloadListeners.push(fn)
   }
   chrome.browserAction.setBadgeText({ text: '' })
 }
 
-export async function sendMessage(data: BgMessage): Promise<any> {
-  console.log('sending')
-  return new Promise(resolve => {
-    console.log('creating promise')
-    chrome.runtime.sendMessage(data, (response: any): void => {
-      console.log('creating callback', response)
-      resolve(response)
+export async function sendMessage<T = any>(message: BgMessage): Promise<T> {
+  console.log('Sending Message to BG', message)
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response: BgResponse<T>): void => {
+      if (response.error || !response.data) {
+        const error = response.error || 'Empty response'
+        console.log('Request failed', error)
+        reject(new Error(error))
+      } else {
+        console.log('Request success', response.data)
+        resolve(response.data)
+      }
     })
   })
 }
 
-export async function storageGet(key: string): Promise<any> {
+export async function storageGet<T extends keyof ChromeStorage>(
+  key: T
+): Promise<ChromeStorage[T]> {
   return new Promise(resolve => {
-    console.log('storage.get')
     chrome.storage.sync.get(key, response => {
-      console.log('storage.get result:', response)
-      resolve(response)
+      resolve(response[key] as ChromeStorage[T])
     })
   })
 }
 
-export async function storageSet(items: any): Promise<any> {
-  console.log('storage.set')
-  await chrome.storage.sync.set(items)
+export async function storageSet<T extends keyof ChromeStorage>(
+  name: T,
+  value: ChromeStorage[T]
+): Promise<any> {
+  const data: ChromeStorage = {
+    [name]: value,
+  }
+  await chrome.storage.sync.set(data)
 }
 
-export function setBadge(status: Status) {
+export function setBadge(status: Status): void {
   let text: string
   switch (status) {
     case Status.SUCCESS:
