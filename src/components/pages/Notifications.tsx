@@ -1,12 +1,27 @@
 import useGithubAPI from 'hooks/useGithubAPI'
 import { id } from 'services/chrome.service'
+import Title from 'components/atoms/Title'
+import Notification from 'components/molecules/Notification'
+import Container from 'components/atoms/Container'
 
 const NotificationsComponent: React.FunctionComponent = () => {
   const githubClient: string = process.env.GITHUB_CLIENT || ''
-  const { notifications, ready } = useGithubAPI(githubClient, id)
-  const text = ready ? notifications.length : 'Loading...'
+  const { notifications, ready, error } = useGithubAPI(githubClient, id)
 
-  return <div>Items: {text}</div>
+  return (
+    <main>
+      <Title>Notifications</Title>
+      <Container>
+        {error
+          ? error.message
+          : !ready
+          ? 'Loading...'
+          : notifications.map(data => (
+              <Notification key={data.id} data={data} />
+            ))}
+      </Container>
+    </main>
+  )
 }
 
 export default NotificationsComponent
