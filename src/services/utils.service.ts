@@ -10,6 +10,7 @@ export function getQuery(): Record<string, string> {
 
 export function objectToForm(object: any): string {
   return Object.keys(object).reduce((form: string, key: string) => {
-    return `${form}&${key}=${encodeURIComponent(object[key])}`
+    const spacer: string = form ? '&' : ''
+    return `${form}${spacer}${key}=${encodeURIComponent(object[key])}`
   }, '')
 }
