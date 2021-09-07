@@ -13,20 +13,19 @@ const useGithubAPI = (clientId: string, extensionId: string) => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [error, setError] = useState<Error>()
+  const [ready, setReady] = useState<boolean>(false)
 
   useEffect(() => {
-    console.log('useGithubAPI - listening for accessToken')
     if (accessToken) {
       const message: BgMessage = {
         type: BgActions.NOTIFICATIONS,
       }
-      console.log(
-        'useGithubAPI - accessToken found, loading notifications',
-        accessToken
-      )
-      sendMessage(message).then(setNotifications).catch(setError)
-    } else {
-      console.log('useGithubAPI - ...')
+      sendMessage(message)
+        .then(data => {
+          setReady(true)
+          setNotifications(data)
+        })
+        .catch(setError)
     }
   }, [accessToken])
 
@@ -38,7 +37,6 @@ const useGithubAPI = (clientId: string, extensionId: string) => {
         type: BgActions.AUTH,
         message: code,
       }
-      console.log('useGithubAPI - Access Code detected, requesting AccessToken')
       sendMessage(message)
         .then(token => {
           storageSet(ChromeStorageKeys.ACCESS_TOKEN, token)
@@ -48,9 +46,6 @@ const useGithubAPI = (clientId: string, extensionId: string) => {
     } else {
       storageGet(ChromeStorageKeys.ACCESS_TOKEN).then(accessToken => {
         if (!accessToken) {
-          console.log(
-            'useGithubAPI - AccessToken is not found, redirecting to Github Auth'
-          )
           const params: string = objectToForm({
             client_id: clientId,
             scope: 'notifications',
@@ -59,17 +54,13 @@ const useGithubAPI = (clientId: string, extensionId: string) => {
 
           window.location.href = `${GITHUB_ENDPOINT.AUTH}?${params}`
         } else {
-          console.log(
-            'useGithubAPI - AccessToken found, storing...',
-            accessToken
-          )
           setAccessToken(accessToken)
         }
       })
     }
   }, [])
 
-  return { notifications, ready: !!accessToken, error }
+  return { notifications, ready, error }
 }
 
 export default useGithubAPI
