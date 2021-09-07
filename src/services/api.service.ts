@@ -22,6 +22,7 @@ async function requestToGithub<T = any>(
     'Content-Type': 'application/x-www-form-urlencoded',
     Accept: 'application/json',
   })
+  let queryParams = ''
 
   if (!skipAuth && token) headers.set('Authorization', `token ${token}`)
 
@@ -31,19 +32,22 @@ async function requestToGithub<T = any>(
   }
 
   if (rawData) {
-    init.body = typeof rawData === 'string' ? rawData : objectToForm(rawData)
+    const encodedParams =
+      typeof rawData === 'string' ? rawData : objectToForm(rawData)
+    if (method === 'GET') {
+      queryParams = `?${encodedParams}`
+    } else {
+      init.body = encodedParams
+    }
   }
 
-  console.log('Requesting:', url, headers.get('Authorization'))
-  const fetchResult: Response = await fetch(url, init)
+  const fetchResult: Response = await fetch(`${url}${queryParams}`, init)
 
   if (!fetchResult.ok) {
-    console.log('Request error')
     throw new Error(fetchResult.status.toString())
   }
 
   const successData: T = await fetchResult.json()
-  console.log('Request success', successData)
   return successData
 }
 
@@ -67,8 +71,7 @@ export async function getAccessToken(code: string): Promise<string> {
 export async function getNotifications(): Promise<Notification[]> {
   const response: Notification[] | Error = await requestToGithub<
     Notification[]
-  >('GET', GITHUB_ENDPOINT.NOTIFICATIONS)
+  >('GET', GITHUB_ENDPOINT.NOTIFICATIONS, { participating: true })
 
-  console.log('Notifications result', response)
   return response
 }
