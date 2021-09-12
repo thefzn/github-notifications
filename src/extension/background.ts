@@ -37,5 +37,5 @@ onMessage(async (msg: BgMessage, respond: Function): Promise<void> => {
 })
 
 onUnload(() => {
-  setBadge(Status.IDLE)
+  setBadge(Status.READY)
 })

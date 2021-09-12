@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import React from 'react'
 import 'assets/css/general.css'
-import Notifications from 'components/pages/Notifications'
+import App from 'components/pages/App'
 
-ReactDOM.render(<Notifications />, document.getElementById('app'))
+ReactDOM.render(<App />, document.getElementById('app'))

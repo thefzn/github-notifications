@@ -3,7 +3,7 @@ import Subject from 'models/github/Subject'
 import Reason from './Reason'
 
 export default interface Notification {
-  id: number
+  id: string
   repository: Repository
   subject: Subject
   reason: Reason
@@ -13,3 +13,5 @@ export default interface Notification {
   url: string
   subscription_url: string
 }
+
+export type NotificationCollection = Record<Reason, Notification[]>

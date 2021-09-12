@@ -78,16 +78,13 @@ export async function storageSet<T extends keyof ChromeStorage>(
 export function setBadge(status: Status): void {
   let text: string
   switch (status) {
-    case Status.SUCCESS:
+    case Status.LOADING:
       text = '✓'
       break
-    case Status.WORKING:
-      text = '⏳'
-      break
-    case Status.FAILURE:
+    case Status.ERROR:
       text = '✕'
       break
-    case Status.IDLE:
+    case Status.READY:
     default:
       text = ''
   }

@@ -2,18 +2,30 @@ import { useEffect, useState } from 'react'
 import Notification from 'models/github/Notification'
 import { getQuery, objectToForm } from 'services/utils.service'
 import { sendMessage, storageGet, storageSet } from 'services/chrome.service'
-import {
-  GITHUB_ENDPOINT,
-  ChromeStorage,
-  ChromeStorageKeys,
-} from 'models/github'
+import { Status, GITHUB_ENDPOINT, ChromeStorageKeys } from 'models/github'
 import { BgActions, BgMessage } from 'models/bg'
 
-const useGithubAPI = (clientId: string, extensionId: string) => {
+export type GithubAPIResults = {
+  notifications: Notification[]
+  status: Status
+  error?: Error
+  loginUrl: string
+}
+
+const useGithubAPI = (
+  clientId: string,
+  extensionId: string
+): GithubAPIResults => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [error, setError] = useState<Error>()
-  const [ready, setReady] = useState<boolean>(false)
+  const [status, setStatus] = useState<Status>(Status.LOADING)
+  const params: string = objectToForm({
+    client_id: clientId,
+    scope: 'notifications, repo',
+    redirect_uri: `chrome-extension://${extensionId}/index.html`,
+  })
+  const loginUrl: string = `${GITHUB_ENDPOINT.AUTH}?${params}`
 
   useEffect(() => {
     if (accessToken) {
@@ -22,10 +34,13 @@ const useGithubAPI = (clientId: string, extensionId: string) => {
       }
       sendMessage(message)
         .then(data => {
-          setReady(true)
+          setStatus(Status.READY)
           setNotifications(data)
         })
-        .catch(setError)
+        .catch((error: Error) => {
+          setStatus(Status.ERROR)
+          setError(error)
+        })
     }
   }, [accessToken])
 
@@ -45,22 +60,13 @@ const useGithubAPI = (clientId: string, extensionId: string) => {
         .catch(setError)
     } else {
       storageGet(ChromeStorageKeys.ACCESS_TOKEN).then(accessToken => {
-        if (!accessToken) {
-          const params: string = objectToForm({
-            client_id: clientId,
-            scope: 'notifications',
-            redirect_uri: `chrome-extension://${extensionId}/index.html`,
-          })
-
-          window.location.href = `${GITHUB_ENDPOINT.AUTH}?${params}`
-        } else {
-          setAccessToken(accessToken)
-        }
+        if (!accessToken) setStatus(Status.NEED_AUTH)
+        else setAccessToken(accessToken)
       })
     }
   }, [])
 
-  return { notifications, ready, error }
+  return { notifications, status, error, loginUrl }
 }
 
 export default useGithubAPI
