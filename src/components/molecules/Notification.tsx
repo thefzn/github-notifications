@@ -9,8 +9,8 @@ const Notification: React.FunctionComponent<{ data: Notification }> = ({
   if (data.unread) classes.push(NotificationClasses.UNREAD)
 
   return (
-    <NotificationElement>
-      <a href={data.url}>{data.subject.title}</a>
+    <NotificationElement className={classes.join(' ')}>
+      <a href={data.subject.latest_comment_url}>{data.subject.title}</a>
     </NotificationElement>
   )
 }
