@@ -6,8 +6,10 @@ import {
 import AccessTokenRequest from 'models/request/AccessToken'
 import AccessTokenResponse from 'models/response/AccessToken'
 import Notification from 'models/github/Notification'
+import NotificationResponse from 'models/response/Notification'
 import { storageGet } from 'services/chrome.service'
 import { objectToForm } from './utils.service'
+import { ReasonMap } from 'models/github/Reason'
 
 async function requestToGithub<T = any>(
   method: 'GET' | 'POST' | 'PUT',
@@ -21,6 +23,8 @@ async function requestToGithub<T = any>(
   const headers: Headers = new Headers({
     'Content-Type': 'application/x-www-form-urlencoded',
     Accept: 'application/json',
+    Pragma: 'no-cache',
+    'Cache-Control': 'no-cache',
   })
   let queryParams = ''
   let replacedURL = ''
@@ -83,21 +87,32 @@ export async function getAccessToken(code: string): Promise<string> {
 }
 
 export async function getNotifications(): Promise<Notification[]> {
-  const response: Notification[] = await requestToGithub<Notification[]>(
-    'GET',
-    GITHUB_ENDPOINT.NOTIFICATIONS,
-    { all: 'true', participating: 'true' }
-  )
+  const responseRaw: NotificationResponse[] = await requestToGithub<
+    NotificationResponse[]
+  >('GET', GITHUB_ENDPOINT.NOTIFICATIONS, {
+    all: 'true',
+    participating: 'true',
+  })
 
-  if (response.length) {
-    console.log(response[0].subject.url)
+  if (responseRaw.length) {
+    const response: Notification[] = responseRaw.reduce(
+      (res: Notification[], rawItem: NotificationResponse): Notification[] => {
+        if (rawItem.subject.type === 'PullRequest') {
+          res.push(new Notification(rawItem))
+        }
+        return res
+      },
+      []
+    )
+    await Promise.all(response.map(item => item.load()))
     getItem(response[0].subject.url)
+    return response
   }
-  return response
+  return []
 }
 
-export async function getItem(url: string): Promise<any> {
-  const response: any = await requestToGithub('GET', GITHUB_ENDPOINT.URL, {
+export async function getItem<T>(url: string): Promise<T> {
+  const response: T = await requestToGithub('GET', GITHUB_ENDPOINT.URL, {
     url,
   })
 
