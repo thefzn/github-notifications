@@ -8,12 +8,7 @@
     "96": "img/icon/icon96.png",
     "128": "img/icon/icon128.png"
   },
-  "permissions": [
-    "tabs",
-    "storage",
-    "https://*.github.com/",
-    "https://github.com/"
-  ],
+  "permissions": ["tabs", "https://*.github.com/", "https://github.com/"],
   "host_permissions": ["https://*.github.com/", "https://github.com/"],
   "browser_action": {
     "default_popup": "index.html",

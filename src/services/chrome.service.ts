@@ -1,4 +1,4 @@
-import { Status, ChromeStorage } from 'models/github'
+import { Status, ChromeStorageKeys } from 'models/github'
 import { BgMessage, BgResponse } from 'models/bg'
 
 const msgListeners: Function[] = []
@@ -8,7 +8,6 @@ export const { id }: ChromeExtensionDetails = chrome.app.getDetails()
 
 const msgListener: any = chrome.runtime.onMessage.addListener(
   (request, sender, respond) => {
-    console.log(request, sender)
     if (sender.id === id) {
       msgListeners.forEach(fn => fn(request, respond))
     }
@@ -16,8 +15,6 @@ const msgListener: any = chrome.runtime.onMessage.addListener(
   }
 )
 const unloadListener: any = chrome.runtime.onSuspend.addListener(() => {
-  // eslint-disable-next-line no-console
-  console.log('Unloading.')
   unloadListeners.forEach(listener => listener())
 })
 
@@ -55,24 +52,17 @@ export async function sendMessage<T = any>(message: BgMessage): Promise<T> {
   })
 }
 
-export async function storageGet<T extends keyof ChromeStorage>(
-  key: T
-): Promise<ChromeStorage[T]> {
-  return new Promise(resolve => {
-    chrome.storage.sync.get(key, response => {
-      resolve(response[key] as ChromeStorage[T])
-    })
-  })
+export async function storageGet(
+  key: ChromeStorageKeys
+): Promise<string | undefined> {
+  return localStorage.getItem(key) || undefined
 }
 
-export async function storageSet<T extends keyof ChromeStorage>(
-  name: T,
-  value: ChromeStorage[T]
-): Promise<any> {
-  const data: ChromeStorage = {
-    [name]: value,
-  }
-  await chrome.storage.sync.set(data)
+export async function storageSet(
+  key: ChromeStorageKeys,
+  value: string
+): Promise<void> {
+  await localStorage.setItem(key, value)
 }
 
 export function setBadge(status: Status): void {
