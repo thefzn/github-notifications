@@ -16,8 +16,5 @@ export enum Status {
 
 export enum ChromeStorageKeys {
   ACCESS_TOKEN = 'accessToken',
-}
-
-export interface ChromeStorage {
-  [ChromeStorageKeys.ACCESS_TOKEN]?: string
+  NOTIFICATIONS = 'notifications',
 }

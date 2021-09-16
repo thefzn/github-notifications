@@ -6,17 +6,17 @@ const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
   data,
 }) => {
   const classes: string[] = []
-  const url: string | undefined = data.url
+  const url: string = data.link
   if (data.unread) classes.push(NotificationClasses.UNREAD)
 
   return (
     <NotificationElement className={classes.join(' ')}>
       {url ? (
         <a href={url} target="_blank">
-          {data.subject.title}
+          {data.title}
         </a>
       ) : (
-        data.subject.title
+        data.title
       )}
     </NotificationElement>
   )

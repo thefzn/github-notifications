@@ -1,15 +1,11 @@
-import {
-  ChromeStorage,
-  ChromeStorageKeys,
-  GITHUB_ENDPOINT,
-} from 'models/github'
+import { ChromeStorageKeys, GITHUB_ENDPOINT } from 'models/github'
 import AccessTokenRequest from 'models/request/AccessToken'
 import AccessTokenResponse from 'models/response/AccessToken'
 import Notification from 'models/github/Notification'
-import NotificationResponse from 'models/response/Notification'
+import NotificationEntity from 'models/response/Notification'
 import { storageGet } from 'services/chrome.service'
 import { objectToForm } from './utils.service'
-import { ReasonMap } from 'models/github/Reason'
+import NotificationService from 'services/notification.service'
 
 async function requestToGithub<T = any>(
   method: 'GET' | 'POST' | 'PUT',
@@ -17,7 +13,7 @@ async function requestToGithub<T = any>(
   rawData?: Record<string, string> | string,
   skipAuth: boolean = false
 ): Promise<T> {
-  const token: ChromeStorage[ChromeStorageKeys.ACCESS_TOKEN] = await storageGet(
+  const token: string | undefined = await storageGet(
     ChromeStorageKeys.ACCESS_TOKEN
   )
   const headers: Headers = new Headers({
@@ -44,7 +40,6 @@ async function requestToGithub<T = any>(
             replacedURL = replacedURL || url
             replacedURL = replacedURL.replace(`{${key}}`, rawData[key])
             delete rawData[key]
-            console.log(url, key, replacedURL)
           }
         })
       }
@@ -87,26 +82,21 @@ export async function getAccessToken(code: string): Promise<string> {
 }
 
 export async function getNotifications(): Promise<Notification[]> {
-  const responseRaw: NotificationResponse[] = await requestToGithub<
-    NotificationResponse[]
+  const responseRaw: NotificationEntity[] = await requestToGithub<
+    NotificationEntity[]
   >('GET', GITHUB_ENDPOINT.NOTIFICATIONS, {
     all: 'true',
     participating: 'true',
+    per_page: '30',
   })
 
   if (responseRaw.length) {
-    const response: Notification[] = responseRaw.reduce(
-      (res: Notification[], rawItem: NotificationResponse): Notification[] => {
-        if (rawItem.subject.type === 'PullRequest') {
-          res.push(new Notification(rawItem))
-        }
-        return res
-      },
-      []
+    const updates: NotificationEntity[] = responseRaw.filter(
+      (rawItem: NotificationEntity): boolean =>
+        rawItem.subject.type === 'PullRequest'
     )
-    await Promise.all(response.map(item => item.load()))
-    getItem(response[0].subject.url)
-    return response
+
+    return NotificationService.unpackAndUpdate(updates)
   }
   return []
 }
