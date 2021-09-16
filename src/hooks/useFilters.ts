@@ -14,7 +14,9 @@ export interface Filter {
 
 export default function useFilters<T, K extends keyof T>(
   items: T[],
-  key: K
+  key: K,
+  countKey?: K,
+  countValue?: any
 ): [Filter[], T[]] {
   const [filters, setFilters] = useState<Filter[]>([])
   const [selected, setSelected] = useState<string>('')
@@ -34,13 +36,15 @@ export default function useFilters<T, K extends keyof T>(
           result[cat] = result[cat] || []
           result[cat].push(item)
 
+          const count: number =
+            !countKey || countValue === item[countKey] ? 1 : 0
           if (existingFilter) {
-            existingFilter.count = result[cat].length
+            existingFilter.count += count
           } else {
             newFilters.push({
               id: cat,
               label: idToLabel(cat),
-              count: 1,
+              count,
               selected: false,
               select: () => setSelected(cat),
             })

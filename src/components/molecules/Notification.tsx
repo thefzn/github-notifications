@@ -1,16 +1,23 @@
 import NotificationElement from 'components/atoms/NotificationElement'
-import Notification from 'models/github/Notification'
+import NotificationInstance from 'models/github/Notification'
 import { NotificationClasses } from 'models/classes'
 
-const Notification: React.FunctionComponent<{ data: Notification }> = ({
+const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
   data,
 }) => {
   const classes: string[] = []
+  const url: string | undefined = data.url
   if (data.unread) classes.push(NotificationClasses.UNREAD)
 
   return (
     <NotificationElement className={classes.join(' ')}>
-      <a href={data.subject.latest_comment_url}>{data.subject.title}</a>
+      {url ? (
+        <a href={url} target="_blank">
+          {data.subject.title}
+        </a>
+      ) : (
+        data.subject.title
+      )}
     </NotificationElement>
   )
 }

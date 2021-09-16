@@ -17,7 +17,7 @@ const NotificationsComponent: React.FunctionComponent = () => {
     githubClient,
     id
   )
-  const [filters, results] = useFilters(notifications, 'reason')
+  const [filters, results] = useFilters(notifications, 'reason', 'unread', true)
   let title: string = 'Github Notifications'
   let message: string | undefined
 

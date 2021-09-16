@@ -10,7 +10,7 @@ const FilterEl: React.FunctionComponent<{
     type="button"
   >
     {filter.label}
-    <FilterBadge>{filter.count}</FilterBadge>
+    {filter.count ? <FilterBadge>{filter.count}</FilterBadge> : ''}
   </Filter>
 )
 
