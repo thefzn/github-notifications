@@ -32,6 +32,8 @@ export enum UpdateReason {
   OTHER,
 }
 
+export type NotificationStatus = Partial<Record<Reason, number>>
+
 export default class Notification {
   public id: string
   public lastRead: string

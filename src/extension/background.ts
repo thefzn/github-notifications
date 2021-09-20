@@ -1,27 +1,40 @@
 import { onMessage, onUnload, setBadge } from 'services/chrome.service'
 import { BgActions, BgMessage, BgResponse } from 'models/bg'
 import { getAccessToken, getNotifications } from 'services/api.service'
-import Notification from 'models/github/Notification'
-import { Status } from 'models/github'
+import Notification, { NotificationStatus } from 'models/github/Notification'
+import Reason from 'models/github/Reason'
+
+function statusToBadge(status: NotificationStatus): string {
+  const result = []
+  let others = 0
+  if (status[Reason.MINE]) result.push(status[Reason.MINE])
+  others += status[Reason.REVIEWING] ?? 0
+  others += status[Reason.OTHERS] ?? 0
+  if (others) result.push(others)
+  return result.join('/')
+}
 
 onMessage(async (msg: BgMessage, respond: Function): Promise<void> => {
   try {
     switch (msg.type) {
       case BgActions.NOTIFICATIONS:
-        console.log('Get Notifications')
-        const res: Notification[] = await getNotifications()
+        const [data, status]: [Notification[], NotificationStatus] =
+          await getNotifications()
         const notifications: BgResponse<Notification[]> = {
-          data: res,
+          data,
         }
+        setBadge(statusToBadge(status))
         respond(notifications)
         break
       case BgActions.AUTH:
-        console.log('Get Token')
         const token: string = await getAccessToken(msg.message)
         const accessToken: BgResponse<string> = {
           data: token,
         }
         respond(accessToken)
+        break
+      case BgActions.BADGE:
+        setBadge(msg.message || '')
         break
       default:
         const error = 'Invalid action'
@@ -37,5 +50,5 @@ onMessage(async (msg: BgMessage, respond: Function): Promise<void> => {
 })
 
 onUnload(() => {
-  setBadge(Status.READY)
+  setBadge('')
 })

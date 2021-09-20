@@ -1,9 +1,19 @@
 import { ChromeStorageKeys } from 'models/github'
-import Notification, { UpdateReason } from 'models/github/Notification'
+import Notification, {
+  NotificationStatus,
+  UpdateReason,
+} from 'models/github/Notification'
+import Reason from 'models/github/Reason'
 import NotificationEntity from 'models/response/Notification'
 import { storageGet, storageSet } from './chrome.service'
 
 export default class NotificationService {
+  private static reasonOrder: Reason[] = [
+    Reason.MINE,
+    Reason.REVIEWING,
+    Reason.OTHERS,
+  ]
+
   /**
    * Compares a Notification with the update to verify what was updated.
    *
@@ -111,6 +121,43 @@ export default class NotificationService {
     await storageSet(ChromeStorageKeys.NOTIFICATIONS, newStore)
 
     return collection
+  }
+
+  /**
+   * Sorts by Reason and Title. Also generates a NotifactionStatus with
+   * the count of unreads for each reason
+   *
+   * @param collection The Notification array
+   * @returns          The sorted Notifactions and NotificationStatus
+   */
+  static sortAndCount(
+    collection: Notification[]
+  ): [Notification[], NotificationStatus] {
+    const status: NotificationStatus = {}
+    const ordered: Notification[] = collection.sort((notif1, notif2) => {
+      let rWeigth1: number = NotificationService.reasonOrder.findIndex(
+        r => r === notif1.reason
+      )
+      let rWeigth2: number = NotificationService.reasonOrder.findIndex(
+        r => r === notif2.reason
+      )
+
+      if (rWeigth1 !== rWeigth2) {
+        return rWeigth1 > rWeigth2 ? 1 : -1
+      } else {
+        return notif1.title > notif2.title ? 1 : -1
+      }
+    })
+
+    ordered.forEach(notif => {
+      if (notif.unread) {
+        let count: number = status[notif.reason] ?? 0
+        count++
+        status[notif.reason] = count
+      }
+    })
+
+    return [ordered, status]
   }
 
   /**

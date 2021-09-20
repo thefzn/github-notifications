@@ -1,6 +1,7 @@
 export enum BgActions {
   AUTH,
   NOTIFICATIONS,
+  BADGE,
 }
 
 export type BgMessage = {

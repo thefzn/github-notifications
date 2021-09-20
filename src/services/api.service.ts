@@ -1,7 +1,7 @@
 import { ChromeStorageKeys, GITHUB_ENDPOINT } from 'models/github'
 import AccessTokenRequest from 'models/request/AccessToken'
 import AccessTokenResponse from 'models/response/AccessToken'
-import Notification from 'models/github/Notification'
+import Notification, { NotificationStatus } from 'models/github/Notification'
 import NotificationEntity from 'models/response/Notification'
 import { storageGet } from 'services/chrome.service'
 import { objectToForm } from './utils.service'
@@ -81,24 +81,35 @@ export async function getAccessToken(code: string): Promise<string> {
   return response.access_token
 }
 
-export async function getNotifications(): Promise<Notification[]> {
+export async function getNotifications(): Promise<
+  [Notification[], NotificationStatus]
+> {
   const responseRaw: NotificationEntity[] = await requestToGithub<
     NotificationEntity[]
   >('GET', GITHUB_ENDPOINT.NOTIFICATIONS, {
     all: 'true',
     participating: 'true',
-    per_page: '30',
+    per_page: '50',
   })
 
   if (responseRaw.length) {
     const updates: NotificationEntity[] = responseRaw.filter(
-      (rawItem: NotificationEntity): boolean =>
-        rawItem.subject.type === 'PullRequest'
+      (rawItem: NotificationEntity): boolean => {
+        const isPR: boolean = rawItem.subject.type === 'PullRequest'
+        const now: number = new Date().getTime()
+        const itemDate: number = new Date(rawItem.updated_at).getTime()
+        const isRecent: boolean = now - itemDate < 1000 * 60 * 60 * 24 * 5 // 5 days old
+
+        return isPR && (isRecent || rawItem.unread)
+      }
     )
 
-    return NotificationService.unpackAndUpdate(updates)
+    const unsortedNotifications: Notification[] =
+      await NotificationService.unpackAndUpdate(updates)
+
+    return NotificationService.sortAndCount(unsortedNotifications)
   }
-  return []
+  return NotificationService.sortAndCount([])
 }
 
 export async function getItem<T>(url: string): Promise<T> {

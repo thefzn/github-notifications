@@ -1,4 +1,4 @@
-import { Status, ChromeStorageKeys } from 'models/github'
+import { ChromeStorageKeys } from 'models/github'
 import { BgMessage, BgResponse } from 'models/bg'
 
 const msgListeners: Function[] = []
@@ -65,18 +65,6 @@ export async function storageSet(
   await localStorage.setItem(key, value)
 }
 
-export function setBadge(status: Status): void {
-  let text: string
-  switch (status) {
-    case Status.LOADING:
-      text = '✓'
-      break
-    case Status.ERROR:
-      text = '✕'
-      break
-    case Status.READY:
-    default:
-      text = ''
-  }
+export function setBadge(text: string): void {
   chrome.browserAction.setBadgeText({ text })
 }
