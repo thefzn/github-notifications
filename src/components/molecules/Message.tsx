@@ -5,7 +5,13 @@ const Message: React.FunctionComponent<{ url?: string }> = ({
   children,
 }) => (
   <NotificationElement>
-    <a href={url}>{children}</a>
+    {url ? (
+      <a href={url} target="_blank">
+        {children}
+      </a>
+    ) : (
+      children
+    )}
   </NotificationElement>
 )
 

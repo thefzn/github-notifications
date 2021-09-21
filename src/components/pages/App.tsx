@@ -20,6 +20,7 @@ const NotificationsComponent: React.FunctionComponent = () => {
   const [filters, results] = useFilters(notifications, 'reason', 'unread', true)
   let title: string = 'Github Notifications'
   let message: string | undefined
+  let url = ''
 
   switch (status) {
     case Status.ERROR:
@@ -36,6 +37,11 @@ const NotificationsComponent: React.FunctionComponent = () => {
       break
     case Status.NEED_AUTH:
       message = 'Please signin to enable Notifications.'
+      url = loginUrl
+      break
+    case Status.AUTH_SUCCESS:
+      title = 'Login success!'
+      message = 'You can now start using the Notifications Extension.'
   }
 
   return (
@@ -43,7 +49,7 @@ const NotificationsComponent: React.FunctionComponent = () => {
       {!!title ? <Title>{title}</Title> : ''}
       {!!filters?.length ? <Filters filters={filters} /> : ''}
       <Container>
-        {message ? <Message>{message}</Message> : ''}
+        {message ? <Message url={url}>{message}</Message> : ''}
         {!!results?.length ? <Notifications items={results} /> : ''}
       </Container>
     </main>
