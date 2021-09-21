@@ -55,7 +55,7 @@ const useGithubAPI = (
       sendMessage(message)
         .then(token => {
           storageSet(ChromeStorageKeys.ACCESS_TOKEN, token)
-          setAccessToken(token)
+          setStatus(Status.AUTH_SUCCESS)
         })
         .catch(setError)
     } else {
