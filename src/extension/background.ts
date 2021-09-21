@@ -1,8 +1,11 @@
-import { onMessage, onUnload, setBadge } from 'services/chrome.service'
+import { onMessage, onLoad, setBadge } from 'services/chrome.service'
 import { BgActions, BgMessage, BgResponse } from 'models/bg'
 import { getAccessToken, getNotifications } from 'services/api.service'
 import Notification, { NotificationStatus } from 'models/github/Notification'
 import Reason from 'models/github/Reason'
+
+let timeout: ReturnType<typeof setTimeout>
+const HEARTBEAT_DELAY: number = 1000 * 60 * 5 // Every 5 mins
 
 function statusToBadge(status: NotificationStatus): string {
   const result = []
@@ -14,16 +17,37 @@ function statusToBadge(status: NotificationStatus): string {
   return result.join('/')
 }
 
+/**
+ *
+ * @returns
+ */
+async function refreshNotifications(): Promise<Notification[]> {
+  const [data, status]: [Notification[], NotificationStatus] =
+    await getNotifications()
+  setBadge(statusToBadge(status))
+
+  return data
+}
+
+/**
+ * Checks every certain time the status of the Notifications
+ */
+async function heartbeat() {
+  clearTimeout(timeout)
+  setBadge(' ...')
+  await refreshNotifications()
+
+  timeout = setTimeout(() => heartbeat(), HEARTBEAT_DELAY)
+}
+
 onMessage(async (msg: BgMessage, respond: Function): Promise<void> => {
   try {
     switch (msg.type) {
       case BgActions.NOTIFICATIONS:
-        const [data, status]: [Notification[], NotificationStatus] =
-          await getNotifications()
+        const data: Notification[] = await refreshNotifications()
         const notifications: BgResponse<Notification[]> = {
           data,
         }
-        setBadge(statusToBadge(status))
         respond(notifications)
         break
       case BgActions.AUTH:
@@ -49,6 +73,4 @@ onMessage(async (msg: BgMessage, respond: Function): Promise<void> => {
   }
 })
 
-onUnload(() => {
-  setBadge('')
-})
+heartbeat()

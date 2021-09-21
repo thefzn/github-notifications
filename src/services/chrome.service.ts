@@ -3,6 +3,7 @@ import { BgMessage, BgResponse } from 'models/bg'
 
 const msgListeners: Function[] = []
 const unloadListeners: Function[] = []
+const loadListeners: Function[] = []
 
 export const { id }: ChromeExtensionDetails = chrome.app.getDetails()
 
@@ -16,6 +17,9 @@ const msgListener: any = chrome.runtime.onMessage.addListener(
 )
 const unloadListener: any = chrome.runtime.onSuspend.addListener(() => {
   unloadListeners.forEach(listener => listener())
+})
+const loadListener: any = chrome.runtime.onStartup.addListener(() => {
+  loadListeners.forEach(listener => listener())
 })
 
 export function stopListening(): void {
@@ -34,6 +38,12 @@ export function onUnload(fn: Function): void {
     unloadListeners.push(fn)
   }
   chrome.browserAction.setBadgeText({ text: '' })
+}
+
+export function onLoad(fn: Function): void {
+  if (typeof fn === 'function') {
+    loadListeners.push(fn)
+  }
 }
 
 export async function sendMessage<T = any>(message: BgMessage): Promise<T> {

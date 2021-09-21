@@ -4,6 +4,7 @@ import { getQuery, objectToForm } from 'services/utils.service'
 import { sendMessage, storageGet, storageSet } from 'services/chrome.service'
 import { Status, GITHUB_ENDPOINT, ChromeStorageKeys } from 'models/github'
 import { BgActions, BgMessage } from 'models/bg'
+import NotificationService from 'services/notification.service'
 
 export type GithubAPIResults = {
   notifications: Notification[]
@@ -29,18 +30,10 @@ const useGithubAPI = (
 
   useEffect(() => {
     if (accessToken) {
-      const message: BgMessage = {
-        type: BgActions.NOTIFICATIONS,
-      }
-      sendMessage(message)
-        .then(data => {
-          setStatus(Status.READY)
-          setNotifications(data)
-        })
-        .catch((error: Error) => {
-          setStatus(Status.ERROR)
-          setError(error)
-        })
+      NotificationService.unpackAndUpdate([]).then(data => {
+        setStatus(Status.READY)
+        setNotifications(data)
+      })
     }
   }, [accessToken])
 

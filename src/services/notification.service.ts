@@ -16,9 +16,16 @@ export default class NotificationService {
     Reason.OTHERS,
   ]
 
+  /**
+   * Analyzes a Notification and decides if its still relevant
+   *
+   * @param notif The Notification in question
+   * @returns true | false
+   */
   static isRelevant(notif: Notification): boolean {
     return notif.unread || notif.age < THREE_DAYS
   }
+
   /**
    * Compares a Notification with the update to verify what was updated.
    *
@@ -184,7 +191,9 @@ export default class NotificationService {
     const next: NotificationEntity | undefined = pending.shift()
     let newNotification: Notification
 
-    if (!next) return finished
+    if (!next) {
+      return finished.concat(Object.values(collectionFromStore))
+    }
 
     const base: Notification | undefined = collectionFromStore[next.id]
 
@@ -192,6 +201,7 @@ export default class NotificationService {
       newNotification = await new Notification(next).loadPRData()
     } else {
       newNotification = await NotificationService.applyUpdate(base, next)
+      delete collectionFromStore[next.id]
     }
 
     if (NotificationService.isRelevant(newNotification))
