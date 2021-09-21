@@ -10,6 +10,7 @@ export enum GITHUB_ENDPOINT {
 export enum Status {
   LOADING,
   NEED_AUTH,
+  AUTH_SUCCESS,
   ERROR,
   READY,
 }

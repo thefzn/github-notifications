@@ -41,7 +41,7 @@ export default class Notification {
   public reason: Reason
   public link: string
   public unread: boolean
-  public lastUpdate: string
+  public age: number
   public prUrl: string = ''
   public pr?: PR
   public update: UpdateReason = UpdateReason.NO_UPDATE
@@ -52,7 +52,7 @@ export default class Notification {
     this.unread = rawNotification.unread
     if ('update' in rawNotification) {
       this.lastRead = rawNotification.lastRead
-      this.lastUpdate = rawNotification.lastUpdate
+      this.age = rawNotification.age
       this.link = rawNotification.link
       this.prUrl = rawNotification.prUrl
       this.title = rawNotification.title
@@ -64,8 +64,10 @@ export default class Notification {
         this.loaded = true
       }
     } else {
+      const now: number = new Date().getTime()
+      const lastUpdate: number = new Date(rawNotification.updated_at).getTime()
       this.lastRead = rawNotification.last_read_at
-      this.lastUpdate = rawNotification.updated_at
+      this.age = now - lastUpdate
       this.link = rawNotification.subject.url.replace('api.github', 'github')
       this.prUrl = rawNotification.subject.url
       this.title = rawNotification.subject.title

@@ -7,6 +7,8 @@ import Reason from 'models/github/Reason'
 import NotificationEntity from 'models/response/Notification'
 import { storageGet, storageSet } from './chrome.service'
 
+const THREE_DAYS: number = 1000 * 60 * 60 * 24 * 3
+
 export default class NotificationService {
   private static reasonOrder: Reason[] = [
     Reason.MINE,
@@ -14,6 +16,9 @@ export default class NotificationService {
     Reason.OTHERS,
   ]
 
+  static isRelevant(notif: Notification): boolean {
+    return notif.unread || notif.age < THREE_DAYS
+  }
   /**
    * Compares a Notification with the update to verify what was updated.
    *
@@ -28,7 +33,7 @@ export default class NotificationService {
     const update: Notification = new Notification(updateRaw)
     let reason: UpdateReason = UpdateReason.NO_UPDATE
 
-    if (base.lastUpdate === update.lastUpdate) return base
+    if (base.age === update.age) return base
 
     try {
       await update.loadPRData()
@@ -45,7 +50,7 @@ export default class NotificationService {
       reason = UpdateReason.BASE_CHANGE
     if (base.pr?.state !== update.pr?.state) reason = UpdateReason.STATE_CHANGE
     if (
-      base.lastUpdate !== update.lastUpdate ||
+      base.age !== update.age ||
       base.pr?.lastUpdate !== update.pr?.lastUpdate
     )
       reason = UpdateReason.OTHER
@@ -71,7 +76,8 @@ export default class NotificationService {
   static package(collection: Notification[]): string {
     return JSON.stringify(
       collection.reduce((store: any[], item: Notification) => {
-        store.push({ ...item })
+        if (NotificationService.isRelevant(item)) store.push({ ...item })
+        // store.push({ ...item })
         return store
       }, [])
     )
@@ -94,22 +100,20 @@ export default class NotificationService {
     const store: string =
       (await storageGet(ChromeStorageKeys.NOTIFICATIONS)) ?? ''
     const collectionFromStore: Record<string, Notification> = {}
-    let collectionRaw: any[] = []
 
     try {
-      collectionRaw = store ? JSON.parse(store) : []
+      const storedData: any[] = store ? JSON.parse(store) : []
+      storedData.forEach(data => {
+        try {
+          const notif: Notification = new Notification(data)
+          collectionFromStore[notif.id] = notif
+        } catch (err) {
+          console.log(err)
+        }
+      })
     } catch (err) {
       throw new Error('Stored data is corrupted')
     }
-
-    collectionRaw.forEach(data => {
-      try {
-        const notif: Notification = new Notification(data)
-        collectionFromStore[notif.id] = notif
-      } catch (err) {
-        console.log(err)
-      }
-    })
 
     const collection: Notification[] = await NotificationService.fetchOneByOne(
       updates,
@@ -190,7 +194,8 @@ export default class NotificationService {
       newNotification = await NotificationService.applyUpdate(base, next)
     }
 
-    finished.push(newNotification)
+    if (NotificationService.isRelevant(newNotification))
+      finished.push(newNotification)
 
     return NotificationService.fetchOneByOne(
       pending,

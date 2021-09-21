@@ -94,14 +94,8 @@ export async function getNotifications(): Promise<
 
   if (responseRaw.length) {
     const updates: NotificationEntity[] = responseRaw.filter(
-      (rawItem: NotificationEntity): boolean => {
-        const isPR: boolean = rawItem.subject.type === 'PullRequest'
-        const now: number = new Date().getTime()
-        const itemDate: number = new Date(rawItem.updated_at).getTime()
-        const isRecent: boolean = now - itemDate < 1000 * 60 * 60 * 24 * 5 // 5 days old
-
-        return isPR && (isRecent || rawItem.unread)
-      }
+      (rawItem: NotificationEntity): boolean =>
+        rawItem.subject.type === 'PullRequest'
     )
 
     const unsortedNotifications: Notification[] =
