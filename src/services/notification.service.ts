@@ -8,11 +8,13 @@ import NotificationEntity from 'models/response/Notification'
 import { storageGet, storageSet } from './chrome.service'
 export default class NotificationService {
   private static THREE_DAYS: number = 1000 * 60 * 60 * 24 * 3
-  private static reasonOrder: Reason[] = [
-    Reason.MINE,
-    Reason.REVIEWING,
-    Reason.OTHERS,
-  ]
+  private static AGE_THERESHOLD: number =
+    new Date().getTime() - NotificationService.THREE_DAYS
+  private static reasonOrder: Record<Reason, number> = {
+    [Reason.MINE]: 0,
+    [Reason.REVIEWING]: 1,
+    [Reason.OTHERS]: 2,
+  }
 
   /**
    * Analyzes a Notification and decides if its still relevant
@@ -21,7 +23,7 @@ export default class NotificationService {
    * @returns true | false
    */
   static isRelevant(notif: Notification): boolean {
-    return notif.unread || notif.age < NotificationService.THREE_DAYS
+    return notif.unread || notif.age > NotificationService.AGE_THERESHOLD
   }
 
   /**
@@ -46,30 +48,18 @@ export default class NotificationService {
       console.log(err)
     }
 
-    if (!base.pr?.merge.merged && update.pr?.merge.merged)
-      reason = UpdateReason.MERGE
     if (base.pr?.comments !== update.pr?.comments) reason = UpdateReason.COMMENT
     if (base.pr?.draft && !update.pr?.draft) reason = UpdateReason.UNDRAFT
     if (!base.pr?.draft && update.pr?.draft) reason = UpdateReason.DRAFT
     if (base.pr?.merge.base !== update.pr?.merge.base)
       reason = UpdateReason.BASE_CHANGE
     if (base.pr?.state !== update.pr?.state) reason = UpdateReason.STATE_CHANGE
-    if (
-      base.age !== update.age ||
-      base.pr?.lastUpdate !== update.pr?.lastUpdate
-    )
-      reason = UpdateReason.OTHER
+    if (base.age !== update.age) reason = UpdateReason.OTHER
     if (base.unread !== update.unread) reason = UpdateReason.READ
 
-    reason = UpdateReason.NO_UPDATE
+    update.update = reason
 
-    if (reason !== UpdateReason.NO_UPDATE) {
-      update.update = reason
-      return update
-    } else {
-      update.update = reason
-      return update
-    }
+    return update
   }
 
   /**
@@ -144,17 +134,13 @@ export default class NotificationService {
   ): [Notification[], NotificationStatus] {
     const status: NotificationStatus = {}
     const ordered: Notification[] = collection.sort((notif1, notif2) => {
-      let rWeigth1: number = NotificationService.reasonOrder.findIndex(
-        r => r === notif1.reason
-      )
-      let rWeigth2: number = NotificationService.reasonOrder.findIndex(
-        r => r === notif2.reason
-      )
+      let rWeigth1: number = NotificationService.reasonOrder[notif1.reason]
+      let rWeigth2: number = NotificationService.reasonOrder[notif2.reason]
 
       if (rWeigth1 !== rWeigth2) {
         return rWeigth1 > rWeigth2 ? 1 : -1
       } else {
-        return notif1.title > notif2.title ? 1 : -1
+        return notif1.age < notif2.age ? 1 : -1
       }
     })
 

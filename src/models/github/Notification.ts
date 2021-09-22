@@ -7,17 +7,16 @@ export interface Merge {
   base: string
   head: string
   repo: string
-  merged: boolean
 }
 export interface PR {
   comments: number
+  commits: number
   creation: string
   draft: boolean
   merge: Merge
   id: number
   number: number
   state: string
-  lastUpdate: string
 }
 
 export enum UpdateReason {
@@ -45,7 +44,6 @@ export default class Notification {
   public prUrl: string = ''
   public pr?: PR
   public update: UpdateReason = UpdateReason.NO_UPDATE
-  private loaded: boolean = false
 
   constructor(rawNotification: NotificationEntity | Notification) {
     this.id = rawNotification.id
@@ -61,13 +59,10 @@ export default class Notification {
 
       if ('pr' in rawNotification) {
         this.pr = rawNotification.pr
-        this.loaded = true
       }
     } else {
-      const now: number = new Date().getTime()
-      const lastUpdate: number = new Date(rawNotification.updated_at).getTime()
       this.lastRead = rawNotification.last_read_at
-      this.age = now - lastUpdate
+      this.age = new Date(rawNotification.updated_at).getTime()
       this.link = rawNotification.subject.url.replace('api.github', 'github')
       this.prUrl = rawNotification.subject.url
       this.title = rawNotification.subject.title
@@ -81,8 +76,7 @@ export default class Notification {
    * @returns Empty promise
    */
   async loadPRData(): Promise<Notification> {
-    if (this.loaded || !this.unread) return this
-    console.log('Loading PR data', this.id)
+    if (this.pr || !this.unread) return this
 
     const pullRequest: PullRequest = await getItem<PullRequest>(this.prUrl)
 
@@ -94,17 +88,15 @@ export default class Notification {
         base: pullRequest.base.ref,
         head: pullRequest.head.ref,
         repo: pullRequest.head.repo.full_name,
-        merged: pullRequest.merged,
       },
       id: pullRequest.id,
       number: pullRequest.number,
       state: pullRequest.state,
-      lastUpdate: pullRequest.updated_at,
+      commits: pullRequest.commits,
     }
 
     this.link = pullRequest._links.html.href
 
-    this.loaded = true
     return this
   }
 }
