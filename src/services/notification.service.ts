@@ -6,10 +6,8 @@ import Notification, {
 import Reason from 'models/github/Reason'
 import NotificationEntity from 'models/response/Notification'
 import { storageGet, storageSet } from './chrome.service'
-
-const THREE_DAYS: number = 1000 * 60 * 60 * 24 * 3
-
 export default class NotificationService {
+  private static THREE_DAYS: number = 1000 * 60 * 60 * 24 * 3
   private static reasonOrder: Reason[] = [
     Reason.MINE,
     Reason.REVIEWING,
@@ -23,7 +21,7 @@ export default class NotificationService {
    * @returns true | false
    */
   static isRelevant(notif: Notification): boolean {
-    return notif.unread || notif.age < THREE_DAYS
+    return notif.unread || notif.age < NotificationService.THREE_DAYS
   }
 
   /**
@@ -67,10 +65,10 @@ export default class NotificationService {
 
     if (reason !== UpdateReason.NO_UPDATE) {
       update.update = reason
-      return reason
+      return update
     } else {
-      base.update = reason
-      return base
+      update.update = reason
+      return update
     }
   }
 
