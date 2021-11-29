@@ -1,8 +1,12 @@
 import NotificationElement from 'components/atoms/NotificationElement'
-import NotificationInstance from 'models/github/Notification'
+import NotificationInstance, { UpdateReason } from 'models/github/Notification'
 import { NotificationClasses } from 'models/classes'
-import Label from 'components/atoms/Label'
 import { formatTimeSince } from 'services/utils.service'
+import Info from 'components/atoms/Info'
+import Branch from 'components/atoms/Branch'
+import Repo from 'components/atoms/Repo'
+import UpdateIcon from 'components/atoms/UpdateIcon'
+import Label from 'components/atoms/Label'
 
 const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
   data,
@@ -10,21 +14,36 @@ const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
   const classes: string[] = []
   const url: string = data.link
   const age: string = formatTimeSince(data.age)
+  let comments: string = '0 comments'
   if (data.unread) classes.push(NotificationClasses.UNREAD)
+  if (data.pr?.comments)
+    comments =
+      data.pr?.comments === 1 ? '1 comment' : `${data.pr?.comments} comments`
 
   return (
     <NotificationElement className={classes.join(' ')}>
-      <Label>{data.update}</Label>
-      <Label>{age}</Label>
+      <UpdateIcon>{data.update}</UpdateIcon>
+      <Info>
+        🕒 {age} 💬 {comments} {data.unread ? 'unread' : 'read'}
+      </Info>
       {data.pr ? (
         <>
-          <Label>C: {data.pr?.comments}</Label>
-          <Label>{data.pr?.state}</Label>
-          <Label>{data.pr?.merge.repo}</Label>
-          <Label>
-            {data.pr?.merge.base.toString()} -&gt;{' '}
-            {data.pr?.merge.head.toString()}
-          </Label>
+          <Repo>
+            <Label>{data.pr?.merge.repo}</Label>
+          </Repo>
+          <Branch>
+            <a
+              href={`https://github.com/${data.pr?.merge.repo}/tree/${data.pr?.merge.base}`}
+            >
+              {data.pr?.merge.base.toString()}
+            </a>
+            <span>to</span>
+            <a
+              href={`https://github.com/${data.pr?.merge.repo}/tree/${data.pr?.merge.head}`}
+            >
+              {data.pr?.merge.head.toString()}
+            </a>
+          </Branch>
         </>
       ) : (
         ''
