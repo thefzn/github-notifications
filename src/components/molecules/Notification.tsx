@@ -24,7 +24,7 @@ const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
     <NotificationElement className={classes.join(' ')}>
       <UpdateIcon>{data.update}</UpdateIcon>
       <Info>
-        🕒 {age} 💬 {comments} {data.unread ? 'unread' : 'read'}
+        🕒 {age} 💬 {comments}
       </Info>
       {data.pr ? (
         <>
