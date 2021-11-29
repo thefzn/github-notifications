@@ -16,19 +16,19 @@ export interface PR {
   merge: Merge
   id: number
   number: number
-  state: string
+  state: 'open' | 'closed'
 }
 
 export enum UpdateReason {
-  NO_UPDATE,
-  READ,
-  COMMENT,
-  UNDRAFT,
-  DRAFT,
-  MERGE,
-  BASE_CHANGE,
-  STATE_CHANGE,
-  OTHER,
+  NO_UPDATE = 'NO_UPDATE',
+  READ = 'READ',
+  COMMENT = 'COMMENT',
+  UNDRAFT = 'UNDRAFT',
+  DRAFT = 'DRAFT',
+  MERGE = 'MERGE',
+  BASE_CHANGE = 'BASE_CHANGE',
+  STATE_CHANGE = 'STATE_CHANGE',
+  OTHER = 'OTHER',
 }
 
 export type NotificationStatus = Partial<Record<Reason, number>>
