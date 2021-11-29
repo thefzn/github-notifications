@@ -23,7 +23,13 @@ export default class NotificationService {
    * @returns true | false
    */
   static isRelevant(notif: Notification): boolean {
-    return notif.unread || notif.age > NotificationService.AGE_THERESHOLD
+    const hasUpdate: boolean = notif.update !== UpdateReason.NO_UPDATE
+    const isOpen: boolean = notif.pr?.state === 'open'
+    return (
+      isOpen &&
+      (notif.unread ||
+        (hasUpdate && notif.age > NotificationService.AGE_THERESHOLD))
+    )
   }
 
   /**
@@ -55,7 +61,7 @@ export default class NotificationService {
       reason = UpdateReason.BASE_CHANGE
     if (base.pr?.state !== update.pr?.state) reason = UpdateReason.STATE_CHANGE
     if (base.age !== update.age) reason = UpdateReason.OTHER
-    if (base.unread !== update.unread) reason = UpdateReason.READ
+    if (update.unread) reason = UpdateReason.READ
 
     update.update = reason
 
@@ -79,6 +85,24 @@ export default class NotificationService {
   }
 
   /**
+   * Fetches the stored notifications
+   *
+   * @returns Notifications array
+   */
+  static async getStoredNotifications(): Promise<Notification[]> {
+    const store: string =
+      (await storageGet(ChromeStorageKeys.NOTIFICATIONS)) ?? ''
+
+    try {
+      const storedData: any[] = store ? JSON.parse(store) : []
+      return storedData.map(storeItem => new Notification(storeItem))
+    } catch (err) {
+      console.warn(err)
+    }
+    return []
+  }
+
+  /**
    * Compares the response from the API to the values on the store
    * and identifies what has been updated on each item.
    *
@@ -92,23 +116,15 @@ export default class NotificationService {
   static async unpackAndUpdate(
     updates: NotificationEntity[]
   ): Promise<Notification[]> {
-    const store: string =
-      (await storageGet(ChromeStorageKeys.NOTIFICATIONS)) ?? ''
-    const collectionFromStore: Record<string, Notification> = {}
-
-    try {
-      const storedData: any[] = store ? JSON.parse(store) : []
-      storedData.forEach(data => {
-        try {
-          const notif: Notification = new Notification(data)
-          collectionFromStore[notif.id] = notif
-        } catch (err) {
-          console.log(err)
-        }
-      })
-    } catch (err) {
-      throw new Error('Stored data is corrupted')
-    }
+    const storedData: Notification[] =
+      await NotificationService.getStoredNotifications()
+    const collectionFromStore: Record<string, Notification> = storedData.reduce(
+      (stored, notif) => ({
+        ...stored,
+        [notif.id]: notif,
+      }),
+      {}
+    )
 
     const collection: Notification[] = await NotificationService.fetchOneByOne(
       updates,
@@ -176,20 +192,23 @@ export default class NotificationService {
     let newNotification: Notification
 
     if (!next) {
-      return finished.concat(Object.values(collectionFromStore))
+      return finished
     }
 
     const base: Notification | undefined = collectionFromStore[next.id]
 
-    if (!base) {
-      newNotification = await new Notification(next).loadPRData()
-    } else {
-      newNotification = await NotificationService.applyUpdate(base, next)
-      delete collectionFromStore[next.id]
-    }
+    newNotification = !base
+      ? new Notification(next)
+      : await NotificationService.applyUpdate(base, next)
 
-    if (NotificationService.isRelevant(newNotification))
+    await newNotification.loadPRData()
+
+    if (NotificationService.isRelevant(newNotification)) {
+      console.log('RELEVANT', newNotification.title)
       finished.push(newNotification)
+    } else {
+      console.log('NOT RELEVANT', newNotification.title)
+    }
 
     return NotificationService.fetchOneByOne(
       pending,

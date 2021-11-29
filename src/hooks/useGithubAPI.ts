@@ -30,7 +30,7 @@ const useGithubAPI = (
 
   useEffect(() => {
     if (accessToken) {
-      NotificationService.unpackAndUpdate([]).then(data => {
+      NotificationService.getStoredNotifications().then(data => {
         setStatus(Status.READY)
         setNotifications(data)
       })

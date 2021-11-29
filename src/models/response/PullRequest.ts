@@ -49,7 +49,7 @@ export default interface PullRequest {
   review_comment_url: string
   review_comments: number
   review_comments_url: string
-  state: string
+  state: 'open' | 'closed'
   statuses_url: string
   title: string
   updated_at: string
