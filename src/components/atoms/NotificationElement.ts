@@ -37,6 +37,7 @@ const NotificationElement = styled.div`
   ${Comments} {
     grid-area: comm;
   }
+
   > a {
     display: block;
     font-size: 1.2em;
@@ -46,6 +47,13 @@ const NotificationElement = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
+  }
+
+  svg {
+    grid-area: img;
+    width: 30px;
+    height: 30px;
+    margin: 15px 10px;
   }
 `
 

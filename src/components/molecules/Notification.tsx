@@ -1,12 +1,12 @@
 import NotificationElement from 'components/atoms/NotificationElement'
-import NotificationInstance, { UpdateReason } from 'models/github/Notification'
+import NotificationInstance from 'models/github/Notification'
 import { NotificationClasses } from 'models/classes'
 import { formatTimeSince } from 'services/utils.service'
 import Info from 'components/atoms/Info'
 import Branch from 'components/atoms/Branch'
 import Repo from 'components/atoms/Repo'
-import UpdateIcon from 'components/atoms/UpdateIcon'
 import Label from 'components/atoms/Label'
+import ReasonIcon from 'components/molecules/ReasonIcon'
 
 const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
   data,
@@ -15,6 +15,7 @@ const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
   const url: string = data.link
   const age: string = formatTimeSince(data.age)
   let comments: string = '0 comments'
+
   if (data.unread) classes.push(NotificationClasses.UNREAD)
   if (data.pr?.comments)
     comments =
@@ -22,7 +23,7 @@ const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
 
   return (
     <NotificationElement className={classes.join(' ')}>
-      <UpdateIcon>{data.update}</UpdateIcon>
+      <ReasonIcon icon={data.update} />
       <Info>
         🕒 {age} 💬 {comments}
       </Info>

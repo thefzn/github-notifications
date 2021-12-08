@@ -49,7 +49,13 @@ const NotificationsComponent: React.FunctionComponent = () => {
       {!!title ? <Title>{title}</Title> : ''}
       {!!filters?.length ? <Filters filters={filters} /> : ''}
       <Container>
-        {message ? <Message url={url}>{message}</Message> : ''}
+        {message ? (
+          <Message url={url}>
+            <a>{message}</a>
+          </Message>
+        ) : (
+          ''
+        )}
         {!!results?.length ? <Notifications items={results} /> : ''}
       </Container>
     </main>
