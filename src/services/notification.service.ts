@@ -211,12 +211,8 @@ export default class NotificationService {
 
     await newNotification.loadPRData()
 
-    if (NotificationService.isRelevant(newNotification)) {
-      console.log('RELEVANT', newNotification.title)
+    if (NotificationService.isRelevant(newNotification))
       finished.push(newNotification)
-    } else {
-      console.log('NOT RELEVANT', newNotification.title)
-    }
 
     return NotificationService.fetchOneByOne(
       pending,
