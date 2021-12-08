@@ -37,7 +37,7 @@ export function onUnload(fn: Function): void {
   if (typeof fn === 'function') {
     unloadListeners.push(fn)
   }
-  chrome.browserAction.setBadgeText({ text: '' })
+  setBadge('')
 }
 
 export function onLoad(fn: Function): void {

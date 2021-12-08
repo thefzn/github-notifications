@@ -3,7 +3,7 @@ import AccessTokenRequest from 'models/request/AccessToken'
 import AccessTokenResponse from 'models/response/AccessToken'
 import Notification, { NotificationStatus } from 'models/github/Notification'
 import NotificationEntity from 'models/response/Notification'
-import { storageGet } from 'services/chrome.service'
+import { setBadge, storageGet, storageSet } from 'services/chrome.service'
 import { objectToForm } from './utils.service'
 import NotificationService from 'services/notification.service'
 
@@ -57,6 +57,10 @@ async function requestToGithub<T = any>(
   )
 
   if (!fetchResult.ok) {
+    if ([401, 403].includes(fetchResult.status)) {
+      setBadge('')
+      storageSet(ChromeStorageKeys.ACCESS_TOKEN, '')
+    }
     throw new Error(fetchResult.status.toString())
   }
 
@@ -81,16 +85,21 @@ export async function getAccessToken(code: string): Promise<string> {
   return response.access_token
 }
 
-export async function getNotifications(): Promise<
-  [Notification[], NotificationStatus]
-> {
-  const responseRaw: NotificationEntity[] = await requestToGithub<
-    NotificationEntity[]
-  >('GET', GITHUB_ENDPOINT.NOTIFICATIONS, {
-    all: 'true',
-    participating: 'true',
-    per_page: '50',
-  })
+export async function getNotifications(): Promise<Notification[]> {
+  let responseRaw: NotificationEntity[] = []
+  try {
+    responseRaw = await requestToGithub<NotificationEntity[]>(
+      'GET',
+      GITHUB_ENDPOINT.NOTIFICATIONS,
+      {
+        all: 'true',
+        participating: 'true',
+        per_page: '50',
+      }
+    )
+  } catch (err) {
+    console.error(err)
+  }
 
   if (responseRaw.length) {
     const updates: NotificationEntity[] = responseRaw.filter(
@@ -98,12 +107,9 @@ export async function getNotifications(): Promise<
         rawItem.subject.type === 'PullRequest'
     )
 
-    const unsortedNotifications: Notification[] =
-      await NotificationService.unpackAndUpdate(updates)
-
-    return NotificationService.sortAndCount(unsortedNotifications)
+    return NotificationService.unpackAndUpdate(updates)
   }
-  return NotificationService.sortAndCount([])
+  return []
 }
 
 export async function getItem<T>(url: string): Promise<T> {

@@ -30,10 +30,16 @@ const useGithubAPI = (
 
   useEffect(() => {
     if (accessToken) {
-      NotificationService.getStoredNotifications().then(data => {
-        setStatus(Status.READY)
-        setNotifications(data)
-      })
+      NotificationService.getStoredNotifications()
+        .then(data => {
+          setStatus(Status.READY)
+          setNotifications(data)
+          return storageGet(ChromeStorageKeys.ACCESS_TOKEN)
+        })
+        .then(accessToken => {
+          // Validate we are still logged
+          if (!accessToken) setStatus(Status.NEED_AUTH)
+        })
     }
   }, [accessToken])
 

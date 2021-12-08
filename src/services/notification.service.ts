@@ -131,7 +131,9 @@ export default class NotificationService {
       [],
       collectionFromStore
     )
-    const newStore: string = NotificationService.package(collection)
+    const newStore: string = NotificationService.package(
+      NotificationService.sort(collection)
+    )
 
     await storageSet(ChromeStorageKeys.NOTIFICATIONS, newStore)
 
@@ -139,17 +141,13 @@ export default class NotificationService {
   }
 
   /**
-   * Sorts by Reason and Title. Also generates a NotifactionStatus with
-   * the count of unreads for each reason
+   * Sorts by Reason and Title.
    *
    * @param collection The Notification array
-   * @returns          The sorted Notifactions and NotificationStatus
+   * @returns          The sorted Notifications
    */
-  static sortAndCount(
-    collection: Notification[]
-  ): [Notification[], NotificationStatus] {
-    const status: NotificationStatus = {}
-    const ordered: Notification[] = collection.sort((notif1, notif2) => {
+  static sort(collection: Notification[]): Notification[] {
+    return collection.sort((notif1, notif2) => {
       let rWeigth1: number = NotificationService.reasonOrder[notif1.reason]
       let rWeigth2: number = NotificationService.reasonOrder[notif2.reason]
 
@@ -159,8 +157,18 @@ export default class NotificationService {
         return notif1.age < notif2.age ? 1 : -1
       }
     })
+  }
 
-    ordered.forEach(notif => {
+  /**
+   * Generates a NotificationStatus with the count of unread items per reason
+   *
+   * @param collection The Notification array
+   * @returns          The NotificationStatus
+   */
+  static count(collection: Notification[]): NotificationStatus {
+    const status: NotificationStatus = {}
+
+    collection.forEach(notif => {
       if (notif.unread) {
         let count: number = status[notif.reason] ?? 0
         count++
@@ -168,7 +176,7 @@ export default class NotificationService {
       }
     })
 
-    return [ordered, status]
+    return status
   }
 
   /**

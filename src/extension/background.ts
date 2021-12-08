@@ -3,6 +3,7 @@ import { BgActions, BgMessage, BgResponse } from 'models/bg'
 import { getAccessToken, getNotifications } from 'services/api.service'
 import Notification, { NotificationStatus } from 'models/github/Notification'
 import Reason from 'models/github/Reason'
+import NotificationService from 'services/notification.service'
 
 let timeout: ReturnType<typeof setTimeout>
 const HEARTBEAT_DELAY: number = 1000 * 60 * 5 // Every 5 mins
@@ -22,8 +23,11 @@ function statusToBadge(status: NotificationStatus): string {
  * @returns
  */
 async function refreshNotifications(): Promise<Notification[]> {
-  const [data, status]: [Notification[], NotificationStatus] =
-    await getNotifications()
+  setBadge(' ...')
+
+  const data: Notification[] = await getNotifications()
+  const status: NotificationStatus = NotificationService.count(data)
+
   setBadge(statusToBadge(status))
 
   return data
@@ -34,7 +38,7 @@ async function refreshNotifications(): Promise<Notification[]> {
  */
 async function heartbeat() {
   clearTimeout(timeout)
-  setBadge(' ...')
+
   await refreshNotifications()
 
   timeout = setTimeout(() => heartbeat(), HEARTBEAT_DELAY)
