@@ -25,6 +25,10 @@ const Notification: React.FunctionComponent<{ data: NotificationInstance }> = ({
     <NotificationElement className={classes.join(' ')}>
       <ReasonIcon icon={data.update} />
       <Info>
+        👤{' '}
+        <a href={data.pr?.user?.link} target="_blank">
+          {data.pr?.user?.name}
+        </a>{' '}
         🕒 {age} 💬 {comments}
       </Info>
       {data.pr ? (

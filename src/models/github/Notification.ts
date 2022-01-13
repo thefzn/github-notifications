@@ -8,15 +8,21 @@ export interface Merge {
   head: string
   repo: string
 }
+
+export interface User {
+  name: string
+  img: string
+  link: string
+}
 export interface PR {
   comments: number
-  commits: number
   creation: string
   draft: boolean
   merge: Merge
   id: number
   number: number
   state: 'open' | 'closed'
+  user: User
 }
 
 export enum UpdateReason {
@@ -92,7 +98,11 @@ export default class Notification {
       id: pullRequest.id,
       number: pullRequest.number,
       state: pullRequest.state,
-      commits: pullRequest.commits,
+      user: {
+        name: pullRequest.user?.login ?? 'Unknown',
+        img: pullRequest.user?.avatar_url ?? '',
+        link: pullRequest.user?.html_url ?? '',
+      },
     }
 
     this.link = pullRequest._links.html.href
